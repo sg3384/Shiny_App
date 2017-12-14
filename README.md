@@ -7,4 +7,6 @@ This is the code for building a shiny app based on the mid term questions in a c
 ## Data Liscence
 
 The data files used in the app are owned by Prof. Charles Lang, permission must be taken before using the data for personal use. 
-Prof. Charles Lang's Github can be found on my Github Profile (I am following him)
+
+
+#### Prof. Charles Lang's Github can be found on my Github Profile (I am following him)
