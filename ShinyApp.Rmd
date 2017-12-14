@@ -1,0 +1,155 @@
+---
+title: Shiny App Code
+output: slidy_presentation
+runtime: shiny
+Author: Shreya Goel, Jonathan Stelman, Lauren Romine
+Data: Charles Lang, Shreya Goel, Jonathan Stelman, Lauren Romine
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+##Interactive Study Aid
+HUDK 4051 Learning Analytics Process/Theory
+```{r data_wrangling, include=FALSE}
+#questions.csv
+#questions_1.csv
+#questions_2.csv
+#Total.csv
+
+#https://githubsg3384.shinyapps.io/interactivestudyapp/
+
+library(tidyr)
+library(dplyr)
+sh <- read.csv("Total.csv", sep = ",", header = TRUE)
+sh3 <- data.matrix(sh[1:11,2:5])
+colnames(sh3) <- c("All","Difficult","Medium","Easy")
+rownames(sh3) <- c("wrn", "cod", "sna", "ggl", "viz", "tree", "nlp", "jitl", "nnt", "nggl", "sub")
+
+question <- read.csv("questions_2.csv", sep = ",", header = TRUE)
+question <- dplyr::select(question, 1:26,28,27)
+question <- tidyr::gather(question, category, Topics, 6:16)
+question <- dplyr::filter(question, Topics == 1)
+question <- dplyr::select(question, 1:5,18,6:17)
+question <- dplyr::select(question, 1:4,6,18,7:17)
+question <- tidyr::gather(question, Assignment, Topic, 7:17)
+question <- dplyr::filter(question, Topic == 1)
+question <- dplyr::select(question, 1:7)
+
+question$AssignmentURL <- ifelse(question$Assignment == "X4050.2", "https://github.com/core-methods-in-edm/assignment2", question$Assignment)
+question$AssignmentURL <- ifelse(question$Assignment == "X4050.3", "https://github.com/core-methods-in-edm/assignment3", question$AssignmentURL)
+question$AssignmentURL <- ifelse(question$Assignment == "X4050.4", "https://github.com/core-methods-in-edm/assignment4", question$AssignmentURL)
+question$AssignmentURL <- ifelse(question$Assignment == "X4050.5", "https://github.com/core-methods-in-edm/assignment5", question$AssignmentURL)
+question$AssignmentURL <- ifelse(question$Assignment == "X4050.6", "https://github.com/core-methods-in-edm/assignment6", question$AssignmentURL)
+question$AssignmentURL <- ifelse(question$Assignment == "X4050.7", "https://github.com/core-methods-in-edm/assignment7", question$AssignmentURL)
+question$AssignmentURL <- ifelse(question$Assignment == "X4051.1", "https://github.com/core-methods-in-edm/assignment8", question$AssignmentURL)
+question$AssignmentURL <- ifelse(question$Assignment == "X4051.2", "https://github.com/la-process-and-theory/assignment2", question$AssignmentURL) 
+question$AssignmentURL <- ifelse(question$Assignment == "X4051.3", "https://github.com/la-process-and-theory/assignment3", question$AssignmentURL) 
+question$AssignmentURL <- ifelse(question$Assignment == "X4051.5", "https://github.com/la-process-and-theory/assignment5", question$AssignmentURL)
+question$AssignmentURL <-  ifelse(question$Assignment == "LMGT","https://www.google.com", question$AssignmentURL)
+
+question1 <- dplyr::select(question, 1,2,5,7,8)
+question2 <- dplyr::select(question, 1,2,4,5,6)
+question3 <- dplyr::select(question, 1,2,3,5)
+question4 <- dplyr::select(question, 1,2,6)
+
+question1 <- unique(question1)
+question2 <- unique(question2)
+question3 <- unique(question3)
+question4 <- unique(question4)
+
+library(ggplot2)
+questions1 <- read.csv("questions_1.csv", sep = ",", header = TRUE)
+
+input <- 'easy'
+
+ifelse(input == 'all', bar.data <- questions1, bar.data <- filter(questions1, questions1$difficulty==input))
+bar.data <- select(bar.data,3:10,12:13)
+bar.data <- summarise_each(bar.data, funs(sum))
+bar.data <- gather(bar.data, 'Topic', 'Count', 1:10)
+bp <- ggplot(bar.data, aes(Topic, Count, fill=Topic)) + geom_col() +
+  ggtitle(paste("Count of", toupper(input), "Questions by Topic")) +
+  scale_fill_brewer(palette='Set3') + 
+  theme_minimal() + theme(legend.position='none')
+bp
+
+
+questions <- read.csv("questions.csv", sep = ",", header = TRUE)
+library(ggplot2)
+library(dplyr)
+
+# set up pie chart style
+blank_theme <- theme_minimal()+
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.border = element_blank(),
+    panel.grid=element_blank(),
+    axis.ticks = element_blank(),
+    plot.title=element_text(size=14)
+  )
+
+# filter by topic
+topic <- 'coding'
+ifelse(topic == 'all', pie.data <- questions, pie.data <- questions[Reduce(`&`, Map(`==`, questions[topic],1)),])
+select(pie.data,difficulty)
+group_by(pie.data,difficulty) %>% count(difficulty) -> pie.data
+names(pie.data) <-c('Difficulty','Count')
+
+library(shiny)
+library(shinythemes)
+```
+
+```{r interactive_app}
+shinyApp(ui = navbarPage(theme = shinytheme("cerulean"), title = 'Midterm Test Breakdown',
+tabPanel("About Us", "About Us - For this project, our group wanted to both provide visualizations that would supply easy and helpful information about the midterm questions and content, and also give future students some support in preparing for similar diagnostic tests. To that end, we created a bar chart that can be dynamically filtered to show information about different aspects or features of the midterm. (We also made a prettier ggplot bar chart and pie chart, but as of deadline we have not been able to make them dynamic.) Additionally, we created a responsive data table that can be searched or filtered to find HUDK-4050 and HUDK-4051 assignments that include skills, tools, or information relevant to each particular question. ", helpText("About the Team:"), 
+helpText("Shreya Goel"), 
+helpText("Robert Jackson"),
+helpText("Lauren Romaine "),
+helpText("Jonathan Stelman")),
+tabPanel("Barplot", sidebarLayout(sidebarPanel(selectInput("difficulty", "Choose Level of Difficulty:", choices=colnames(sh3)), hr(), 
+helpText("Categories:"), 
+helpText("1-Wrangling"),
+helpText("2-Coding"),
+helpText("3-Social Network Analysis"),
+helpText("4-Googleable"),
+helpText("5-Visualizations"), 
+helpText("6-Trees"), 
+helpText("7-Natural Language Processing"), 
+helpText("8-Just in time learning"), 
+helpText("9-Neural Nets"),  
+helpText("10-NonGoogleable"), 
+helpText("11-Substantive")), mainPanel(plotOutput("Plot")))),
+tabPanel("GG-Barplot", sidebarLayout(sidebarPanel(selectInput("difficulty", "Difficulty:", choices=unique(questions1$difficulty)), hr(), helpText("Data from midterm 2017")), mainPanel(plotOutput("bp")))),
+tabPanel("GG-Piechart", sidebarLayout(sidebarPanel(selectInput("topic", "Topic:", choices=unique(question1$category)), hr(), helpText("Data from midterm 2017")), mainPanel(plotOutput("pc")))),
+navbarMenu("Data Tables",
+tabPanel('Filter All', DT::dataTableOutput('ex2')),
+tabPanel('Filter assignment recomendation/category', DT::dataTableOutput('ex3')),
+tabPanel('Filter difficulty/category', DT::dataTableOutput('ex4')),
+tabPanel('Filter format/category', DT::dataTableOutput('ex5')),
+tabPanel('Filter percent correct', DT::dataTableOutput('ex6'))), collapsible = TRUE),
+server = function(input, output){
+output$Plot <- renderPlot({barplot(sh3[,input$difficulty], fill=TRUE, col=rgb(0.32,0.83,0.64), main="Number of questions in each category for the difficulty level", ylab="Number of Questions",
+            xlab="Category")})
+output$bp <- renderPlot({ggplot(bar.data, aes(Topic, Count, fill=Topic)) + geom_col() +
+  ggtitle(paste("Count of Easy questions by topic"))})
+
+output$pc <- renderPlot({ggplot(pie.data, aes(x="", y=Count, fill=Difficulty)) +
+  geom_bar(width = 1, stat = "identity") + coord_polar("y") + 
+  scale_fill_manual(values = c("#30B080", "#ffff66", "#ff6600"),
+                    limits = c("easy", "medium", "hard"),
+                    breaks = c("easy", "medium", "hard"),
+                    name   = "Difficulty",
+                    labels = c("Easy", "Medium", "Hard")) + 
+  blank_theme + theme(axis.text.x=element_blank()) + 
+  geom_text(aes(label = paste(Count,' (',round(100*Count/sum(pie.data$Count)),'%)', sep = '')), position = position_stack(vjust = 0.5)) +
+  ggtitle(paste("Distribution of Question Difficulty for", toupper(topic), "Questions"))})
+
+output$ex1 <- DT::renderDataTable(quiz2, options = list(pageLength = 20))
+output$ex2 <- DT::renderDataTable(question, options = list(pageLength = 20))
+output$ex3 <- DT::renderDataTable(question1, options = list(pageLength = 20))
+output$ex4 <- DT::renderDataTable(question2, options = list(pageLength = 20))
+output$ex5 <- DT::renderDataTable(question3, options = list(pageLength = 20))
+output$ex6 <- DT::renderDataTable(question4, options = list(pageLength = 20))
+})
+```
