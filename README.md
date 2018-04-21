@@ -10,3 +10,6 @@ The data files used in the app are owned by Prof. Charles Lang, permission must 
 
 
 #### Prof. Charles Lang's Github can be found on my Github Profile (I am following him)
+
+### Skills used by Shreya
+R, Shiny R, Data wrangling, Data Cleaning, Team management, Documentation
